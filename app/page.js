@@ -320,8 +320,8 @@ Alias 1 - Servidores Web:
 Name: WebServers
 Type: Host(s)
 IP Addresses: 192.168.1.100
-                192.168.1.101
-                192.168.1.102
+               192.168.1.101
+               192.168.1.102
 
 Alias 2 - Puertos Web:
 Name: WebPorts
@@ -427,10 +427,10 @@ tcpdump -i eth0 -nn 'tcp[tcpflags] & (tcp-syn|tcp-ack) != 0' and port 80
           codigo: `# Sintaxis de filtros (Display Filters):
 
 ip.addr == 192.168.1.100         # Tráfico de/hacia IP
-tcp.port == 443                  # Tráfico HTTPS
-http.request.method == "POST"    # Solo requests POST
-tcp.flags.syn == 1               # Solo paquetes SYN
-dns.qry.name contains "google"   # Queries DNS con google
+tcp.port == 443               # Tráfico HTTPS
+http.request.method == "POST"   # Solo requests POST
+tcp.flags.syn == 1              # Solo paquetes SYN
+dns.qry.name contains "google"    # Queries DNS con google
 
 # Combinación con operadores:
 (ip.src == 192.168.1.100) && (tcp.dstport == 80)
@@ -507,11 +507,11 @@ echo "Firewall inicializado correctamente"`,
 setup_logging() {
     # Log de INPUT bloqueado
     iptables -A INPUT -m limit --limit 5/min -j LOG \\
-        --log-prefix "FW-INPUT-DROP: " --log-level 4
+         --log-prefix "FW-INPUT-DROP: " --log-level 4
     
     # Log de FORWARD bloqueado  
     iptables -A FORWARD -m limit --limit 5/min -j LOG \\
-        --log-prefix "FW-FORWARD-DROP: " --log-level 4
+         --log-prefix "FW-FORWARD-DROP: " --log-level 4
 }
 
 # Los logs aparecen en /var/log/kern.log o /var/log/messages
@@ -795,19 +795,20 @@ check_rules_documented() {
 
   // Función para ejecutar código en el laboratorio
   const ejecutarCodigo = (tech) => {
-    setCodeOutput(`🔄 Ejecutando código ${tech}...
+    setCodeOutput(`Ejecutando código ${tech}...
 
-✅ Validación de sintaxis: OK
-📊 Análisis estático: Correcto
-🔍 Verificación de mejores prácticas: ✓
+Validación de sintaxis: OK
+Análisis estático: Correcto
+Verificación de mejores prácticas: ✓
 
 Resultado: El código es válido y sigue las normas establecidas.
 
-${tech === 'iptables' ? '⚠️ Nota: En producción, asegúrate de tener acceso alternativo antes de aplicar reglas DROP.' : ''}
-${tech === 'pfSense' ? '💡 Tip: Siempre haz backup antes de cambios importantes en Rules > Diagnostics > Backup.' : ''}
-${tech === 'Wireshark' ? '📝 Recomendación: Usa filtros de captura para reducir tamaño de archivos en redes de alto tráfico.' : ''}
+${tech === 'iptables' ? 'Nota: En producción, asegúrate de tener acceso alternativo antes de aplicar reglas DROP.' : ''}
+${tech === 'pfSense' ? 'Tip: Siempre haz backup antes de cambios importantes en Rules > Diagnostics > Backup.' : ''}
+${tech ==='Wireshark' ? 'Recomendación: Usa filtros de captura para reducir tamaño de archivos en redes de alto tráfico.' : ''}
 
-📚 Consulta el glosario para términos técnicos.`)
+Consulta el glosario para términos técnicos.`)
+  }
   
   const proyecto = {
     nombre: "Configuración de Firewall Personalizado (iptables/pfSense)",
@@ -1470,5 +1471,3 @@ ${tech === 'Wireshark' ? '📝 Recomendación: Usa filtros de captura para reduc
     </div>
   )
 }
-
-}  

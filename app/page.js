@@ -808,12 +808,7 @@ ${tech === 'pfSense' ? '💡 Tip: Siempre haz backup antes de cambios importante
 ${tech === 'Wireshark' ? '📝 Recomendación: Usa filtros de captura para reducir tamaño de archivos en redes de alto tráfico.' : ''}
 
 📚 Consulta el glosario para términos técnicos.`)
-  }
-  const [selectedTech, setSelectedTech] = useState('iptables')
-  const [codeInput, setCodeInput] = useState('')
-  const [codeOutput, setCodeOutput] = useState('')
-  const [selectedGlossaryLetter, setSelectedGlossaryLetter] = useState('A')
-
+  
   const proyecto = {
     nombre: "Configuración de Firewall Personalizado (iptables/pfSense)",
     descripcion: "Desarrollar, probar e implementar un conjunto de reglas de firewall robustas usando iptables (Linux) o pfSense para segmentar redes, controlar el tráfico de entrada/salida, mitigar amenazas y asegurar el perímetro de la red.",

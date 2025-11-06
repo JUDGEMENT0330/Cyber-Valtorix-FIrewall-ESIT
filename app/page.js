@@ -1470,4 +1470,5 @@ ${tech === 'Wireshark' ? '📝 Recomendación: Usa filtros de captura para reduc
     </div>
   )
 }
+
 }  

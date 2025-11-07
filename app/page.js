@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 
 export default function Home() {
@@ -8,6 +9,7 @@ export default function Home() {
   const [codeInput, setCodeInput] = useState('')
   const [codeOutput, setCodeOutput] = useState('')
   const [selectedGlossaryLetter, setSelectedGlossaryLetter] = useState('A')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Conceptos Básicos Educativos
   const conceptosBasicos = [
@@ -319,8 +321,8 @@ Alias 1 - Servidores Web:
 Name: WebServers
 Type: Host(s)
 IP Addresses: 192.168.1.100
-               192.168.1.101
-               192.168.1.102
+                192.168.1.101
+                192.168.1.102
 
 Alias 2 - Puertos Web:
 Name: WebPorts
@@ -426,10 +428,10 @@ tcpdump -i eth0 -nn 'tcp[tcpflags] & (tcp-syn|tcp-ack) != 0' and port 80
           codigo: `# Sintaxis de filtros (Display Filters):
 
 ip.addr == 192.168.1.100         # Tráfico de/hacia IP
-tcp.port == 443               # Tráfico HTTPS
-http.request.method == "POST"   # Solo requests POST
-tcp.flags.syn == 1              # Solo paquetes SYN
-dns.qry.name contains "google"    # Queries DNS con google
+tcp.port == 443                  # Tráfico HTTPS
+http.request.method == "POST"    # Solo requests POST
+tcp.flags.syn == 1               # Solo paquetes SYN
+dns.qry.name contains "google"   # Queries DNS con google
 
 # Combinación con operadores:
 (ip.src == 192.168.1.100) && (tcp.dstport == 80)
@@ -506,11 +508,11 @@ echo "Firewall inicializado correctamente"`,
 setup_logging() {
     # Log de INPUT bloqueado
     iptables -A INPUT -m limit --limit 5/min -j LOG \\
-         --log-prefix "FW-INPUT-DROP: " --log-level 4
+        --log-prefix "FW-INPUT-DROP: " --log-level 4
     
     # Log de FORWARD bloqueado  
     iptables -A FORWARD -m limit --limit 5/min -j LOG \\
-         --log-prefix "FW-FORWARD-DROP: " --log-level 4
+        --log-prefix "FW-FORWARD-DROP: " --log-level 4
 }
 
 # Los logs aparecen en /var/log/kern.log o /var/log/messages
@@ -548,21 +550,21 @@ echo "Validación exitosa"`,
 # backup-firewall.sh
 
 BACKUP_DIR="/etc/firewall/backups"
-TIMESTAMP=\$(date +%Y%m%d_%H%M%S)
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 # Crear backup
 backup_rules() {
-    mkdir -p "\$BACKUP_DIR"
-    iptables-save > "\$BACKUP_DIR/rules_\$TIMESTAMP.v4"
-    echo "Backup creado: \$BACKUP_DIR/rules_\$TIMESTAMP.v4"
+    mkdir -p "$BACKUP_DIR"
+    iptables-save > "$BACKUP_DIR/rules_$TIMESTAMP.v4"
+    echo "Backup creado: $BACKUP_DIR/rules_$TIMESTAMP.v4"
 }
 
 # Restaurar último backup
 rollback() {
-    LAST_BACKUP=\$(ls -t \$BACKUP_DIR/rules_*.v4 | head -1)
-    if [ -f "\$LAST_BACKUP" ]; then
-        iptables-restore < "\$LAST_BACKUP"
-        echo "Restaurado: \$LAST_BACKUP"
+    LAST_BACKUP=$(ls -t $BACKUP_DIR/rules_*.v4 | head -1)
+    if [ -f "$LAST_BACKUP" ]; then
+        iptables-restore < "$LAST_BACKUP"
+        echo "Restaurado: $LAST_BACKUP"
     else
         echo "ERROR: No hay backups disponibles"
     fi
@@ -580,11 +582,11 @@ ALERT_EMAIL="admin@empresa.com"
 THRESHOLD=1000  # Paquetes bloqueados por minuto
 
 check_blocked_packets() {
-    BLOCKED=\$(journalctl -k --since "1 minute ago" | grep "FW-INPUT-DROP" | wc -l)
+    BLOCKED=$(journalctl -k --since "1 minute ago" | grep "FW-INPUT-DROP" | wc -l)
     
-    if [ \$BLOCKED -gt \$THRESHOLD ]; then
-        echo "ALERTA: \$BLOCKED paquetes bloqueados en el último minuto" | \\
-            mail -s "Firewall Alert" \$ALERT_EMAIL
+    if [ $BLOCKED -gt $THRESHOLD ]; then
+        echo "ALERTA: $BLOCKED paquetes bloqueados en el último minuto" | \\
+            mail -s "Firewall Alert" $ALERT_EMAIL
     fi
 }
 
@@ -602,21 +604,21 @@ CHAIN_NAME="BLACKLIST"
 
 update_blacklist() {
     # Crear cadena si no existe
-    iptables -N \$CHAIN_NAME 2>/dev/null || iptables -F \$CHAIN_NAME
+    iptables -N $CHAIN_NAME 2>/dev/null || iptables -F $CHAIN_NAME
     
     # Leer IPs del archivo y bloquear
     while IFS= read -r ip; do
-        [[ \$ip =~ ^#.*\$ ]] && continue  # Saltar comentarios
-        [[ -z \$ip ]] && continue        # Saltar líneas vacías
-        iptables -A \$CHAIN_NAME -s "\$ip" -j DROP
-    done < "\$BLACKLIST_FILE"
+        [[ $ip =~ ^#.*$ ]] && continue  # Saltar comentarios
+        [[ -z $ip ]] && continue        # Saltar líneas vacías
+        iptables -A $CHAIN_NAME -s "$ip" -j DROP
+    done < "$BLACKLIST_FILE"
     
     # Insertar cadena en INPUT
-    iptables -I INPUT -j \$CHAIN_NAME
+    iptables -I INPUT -j $CHAIN_NAME
 }
 
 update_blacklist
-echo "Blacklist actualizada: \$(iptables -L \$CHAIN_NAME -n | wc -l) IPs"`,
+echo "Blacklist actualizada: $(iptables -L $CHAIN_NAME -n | wc -l) IPs"`,
           explicacion: "Mantener blacklist en archivo separado facilita actualizaciones sin modificar script principal. Útil para bloquear atacantes conocidos."
         }
       ]
@@ -771,17 +773,17 @@ check_default_deny() {
 }
 
 check_rules_documented() {
-    RULES=\$(iptables-save | grep -c "^-A")
-    DOCUMENTED=\$(grep -c "Regla:" /etc/firewall/documentation.txt)
+    RULES=$(iptables-save | grep -c "^-A")
+    DOCUMENTED=$(grep -c "Regla:" /etc/firewall/documentation.txt)
     
-    if [ \$RULES -ne \$DOCUMENTED ]; then
-        echo "ADVERTENCIA: \$RULES reglas, \$DOCUMENTED documentadas"
+    if [ $RULES -ne $DOCUMENTED ]; then
+        echo "ADVERTENCIA: $RULES reglas, $DOCUMENTED documentadas"
     fi
 }
 
 # Generar reporte de auditoría
 {
-    echo "=== Auditoría Firewall \$(date) ==="
+    echo "=== Auditoría Firewall $(date) ==="
     check_logging
     check_default_deny
     check_rules_documented
@@ -794,21 +796,21 @@ check_rules_documented() {
 
   // Función para ejecutar código en el laboratorio
   const ejecutarCodigo = (tech) => {
-    setCodeOutput(`Ejecutando código ${tech}...
+    setCodeOutput(`🔄 Ejecutando código ${tech}...
 
-Validación de sintaxis: OK
-Análisis estático: Correcto
-Verificación de mejores prácticas: ✓
+✅ Validación de sintaxis: OK
+📊 Análisis estático: Correcto
+🔍 Verificación de mejores prácticas: ✓
 
 Resultado: El código es válido y sigue las normas establecidas.
 
-${tech === 'iptables' ? 'Nota: En producción, asegúrate de tener acceso alternativo antes de aplicar reglas DROP.' : ''}
-${tech === 'pfSense' ? 'Tip: Siempre haz backup antes de cambios importantes en Rules > Diagnostics > Backup.' : ''}
-${tech ==='Wireshark' ? 'Recomendación: Usa filtros de captura para reducir tamaño de archivos en redes de alto tráfico.' : ''}
+${tech === 'iptables' ? '⚠️ Nota: En producción, asegúrate de tener acceso alternativo antes de aplicar reglas DROP.' : ''}
+${tech === 'pfSense' ? '💡 Tip: Siempre haz backup antes de cambios importantes en Rules > Diagnostics > Backup.' : ''}
+${tech === 'Wireshark' ? '📝 Recomendación: Usa filtros de captura para reducir tamaño de archivos en redes de alto tráfico.' : ''}
 
-Consulta el glosario para términos técnicos.`)
+📚 Consulta el glosario para términos técnicos.`)
   }
-  
+
   const proyecto = {
     nombre: "Configuración de Firewall Personalizado (iptables/pfSense)",
     descripcion: "Desarrollar, probar e implementar un conjunto de reglas de firewall robustas usando iptables (Linux) o pfSense para segmentar redes, controlar el tráfico de entrada/salida, mitigar amenazas y asegurar el perímetro de la red.",
@@ -911,18 +913,19 @@ Consulta el glosario para términos técnicos.`)
       {/* Background effects */}
       <div className="fixed inset-0 bg-gradient-to-br from-dark-bg via-gray-900 to-dark-bg"></div>
       <div className="fixed inset-0 opacity-30">
-        <div className="absolute top-20 left-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-20 left-20 w-64 h-64 sm:w-96 sm:h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-64 h-64 sm:w-96 sm:h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-96 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
       </div>
 
       {/* Header */}
       <header className="relative z-10 border-b border-white/5 backdrop-blur-xl bg-black/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="relative w-12 h-12 shine-effect rounded-lg overflow-hidden">
-                <img
+            {/* Logo y título */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 shine-effect rounded-lg overflow-hidden flex-shrink-0">
+                <Image
                   src="https://cybervaltorix.com/wp-content/uploads/2025/09/Logo-Valtorix-1.png"
                   alt="Valtorix Logo"
                   width={48}
@@ -931,18 +934,20 @@ Consulta el glosario para términos técnicos.`)
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                <h1 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
                   Valtorix
                 </h1>
-                <p className="text-sm text-gray-400">Firewall Security Manager</p>
+                <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Firewall Security Manager</p>
               </div>
             </div>
-            <nav className="hidden md:flex space-x-1">
+
+            {/* Menú Desktop */}
+            <nav className="hidden lg:flex space-x-1">
               {['overview', 'actitud', 'competencias', 'stack', 'aprende', 'glosario', 'laboratorio'].map((section) => (
                 <button
                   key={section}
                   onClick={() => setSelectedSection(section)}
-                  className={`px-4 py-2 rounded-lg transition-all duration-300 text-sm ${
+                  className={`px-3 xl:px-4 py-2 rounded-lg transition-all duration-300 text-xs xl:text-sm ${
                     selectedSection === section
                       ? 'glass-card text-cyan-400'
                       : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -952,73 +957,110 @@ Consulta el glosario para términos técnicos.`)
                 </button>
               ))}
             </nav>
+
+            {/* Botón Menú Móvil */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 text-gray-400 hover:text-white transition-colors"
+              aria-label="Menú"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
+
+          {/* Menú Móvil Desplegable */}
+          {mobileMenuOpen && (
+            <nav className="lg:hidden mt-4 pb-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {['overview', 'actitud', 'competencias', 'stack', 'aprende', 'glosario', 'laboratorio'].map((section) => (
+                <button
+                  key={section}
+                  onClick={() => {
+                    setSelectedSection(section)
+                    setMobileMenuOpen(false)
+                  }}
+                  className={`px-4 py-3 rounded-lg transition-all duration-300 text-sm ${
+                    selectedSection === section
+                      ? 'glass-card text-cyan-400'
+                      : 'glass-card-dark text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {section.charAt(0).toUpperCase() + section.slice(1)}
+                </button>
+              ))}
+            </nav>
+          )}
         </div>
       </header>
 
       {/* Main content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-12">
         {/* Hero Section */}
         {selectedSection === 'overview' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="glass-card p-8 shine-effect">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30">
-                  <span className="text-3xl">🔥</span>
+          <div className="space-y-6 sm:space-y-8 animate-fade-in">
+            <div className="glass-card p-4 sm:p-8 shine-effect">
+              <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
+                <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30">
+                  <span className="text-2xl sm:text-3xl">🔥</span>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-3xl font-bold mb-4 glow-text">{proyecto.nombre}</h2>
-                  <p className="text-gray-300 text-lg leading-relaxed">{proyecto.descripcion}</p>
+                  <h2 className="text-xl sm:text-3xl font-bold mb-3 sm:mb-4 glow-text">{proyecto.nombre}</h2>
+                  <p className="text-gray-300 text-sm sm:text-lg leading-relaxed">{proyecto.descripcion}</p>
                 </div>
               </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="glass-card-dark p-6 shine-effect group cursor-pointer">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center border border-green-500/30 group-hover:scale-110 transition-transform">
-                    <span className="text-2xl">✅</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+              <div className="glass-card-dark p-4 sm:p-6 shine-effect group cursor-pointer">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center border border-green-500/30 group-hover:scale-110 transition-transform flex-shrink-0">
+                    <span className="text-xl sm:text-2xl">✅</span>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-green-400">5</p>
-                    <p className="text-sm text-gray-400">Actitudes Clave</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-green-400">5</p>
+                    <p className="text-xs sm:text-sm text-gray-400">Actitudes Clave</p>
                   </div>
                 </div>
               </div>
 
-              <div className="glass-card-dark p-6 shine-effect group cursor-pointer">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center border border-blue-500/30 group-hover:scale-110 transition-transform">
-                    <span className="text-2xl">⚙️</span>
+              <div className="glass-card-dark p-4 sm:p-6 shine-effect group cursor-pointer">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center border border-blue-500/30 group-hover:scale-110 transition-transform flex-shrink-0">
+                    <span className="text-xl sm:text-2xl">⚙️</span>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-blue-400">13</p>
-                    <p className="text-sm text-gray-400">Competencias Técnicas</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-blue-400">13</p>
+                    <p className="text-xs sm:text-sm text-gray-400">Competencias Técnicas</p>
                   </div>
                 </div>
               </div>
 
-              <div className="glass-card-dark p-6 shine-effect group cursor-pointer">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center border border-purple-500/30 group-hover:scale-110 transition-transform">
-                    <span className="text-2xl">🛠️</span>
+              <div className="glass-card-dark p-4 sm:p-6 shine-effect group cursor-pointer">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center border border-purple-500/30 group-hover:scale-110 transition-transform flex-shrink-0">
+                    <span className="text-xl sm:text-2xl">🛠️</span>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-purple-400">7</p>
-                    <p className="text-sm text-gray-400">Tecnologías Core</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-purple-400">7</p>
+                    <p className="text-xs sm:text-sm text-gray-400">Tecnologías Core</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Key Message */}
-            <div className="glass-card p-6 border-l-4 border-cyan-500">
+            <div className="glass-card p-4 sm:p-6 border-l-4 border-cyan-500">
               <div className="flex items-start space-x-3">
-                <span className="text-2xl">💡</span>
+                <span className="text-xl sm:text-2xl flex-shrink-0">💡</span>
                 <div>
-                  <h3 className="text-lg font-semibold text-cyan-400 mb-2">Filosofía del Proyecto</h3>
-                  <p className="text-gray-300">
+                  <h3 className="text-base sm:text-lg font-semibold text-cyan-400 mb-2">Filosofía del Proyecto</h3>
+                  <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
                     La actitud es tan crítica como las competencias técnicas. Un error de configuración puede denegar servicios legítimos 
                     (false positive) o permitir un ataque (false negative). Se requiere un equipo con mentalidad de <span className="text-cyan-400 font-semibold">Zero Trust</span> y 
                     capacidad de respuesta ante incidentes.
@@ -1031,25 +1073,25 @@ Consulta el glosario para términos técnicos.`)
 
         {/* Actitud Section */}
         {selectedSection === 'actitud' && (
-          <div className="space-y-6 animate-fade-in">
-            <h2 className="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
               Actitudes Requeridas del Equipo
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {actitudes.map((item, index) => (
                 <div
                   key={index}
-                  className="glass-card p-6 shine-effect group hover:scale-[1.02] transition-transform"
+                  className="glass-card p-4 sm:p-6 shine-effect group hover:scale-[1.02] transition-transform"
                 >
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30 group-hover:scale-110 transition-transform">
-                      <span className="text-2xl">{item.icon}</span>
+                  <div className="flex items-start space-x-3 sm:space-x-4">
+                    <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30 group-hover:scale-110 transition-transform">
+                      <span className="text-xl sm:text-2xl">{item.icon}</span>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-cyan-400 mb-3 glow-text">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg sm:text-xl font-semibold text-cyan-400 mb-2 sm:mb-3 glow-text">
                         {item.rasgo}
                       </h3>
-                      <p className="text-gray-300 leading-relaxed">{item.descripcion}</p>
+                      <p className="text-gray-300 leading-relaxed text-sm sm:text-base">{item.descripcion}</p>
                     </div>
                   </div>
                 </div>
@@ -1060,26 +1102,26 @@ Consulta el glosario para términos técnicos.`)
 
         {/* Competencias Section */}
         {selectedSection === 'competencias' && (
-          <div className="space-y-8 animate-fade-in">
-            <h2 className="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+          <div className="space-y-6 sm:space-y-8 animate-fade-in">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
               Competencias Técnicas
             </h2>
             {Object.entries(competencias).map(([categoria, habilidades], catIndex) => (
-              <div key={catIndex} className="glass-card p-8 shine-effect">
-                <h3 className="text-2xl font-bold text-cyan-400 mb-6 flex items-center">
-                  <span className="w-2 h-8 bg-gradient-to-b from-cyan-500 to-blue-500 rounded-full mr-3"></span>
-                  {categoria}
+              <div key={catIndex} className="glass-card p-4 sm:p-8 shine-effect">
+                <h3 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-4 sm:mb-6 flex items-center">
+                  <span className="w-2 h-6 sm:h-8 bg-gradient-to-b from-cyan-500 to-blue-500 rounded-full mr-3"></span>
+                  <span className="text-base sm:text-2xl">{categoria}</span>
                 </h3>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4">
                   {habilidades.map((hab, habIndex) => (
                     <div
                       key={habIndex}
-                      className="glass-card-dark p-5 group hover:scale-[1.01] transition-transform"
+                      className="glass-card-dark p-4 sm:p-5 group hover:scale-[1.01] transition-transform"
                     >
-                      <h4 className="text-lg font-semibold text-white mb-2 group-hover:text-cyan-400 transition-colors">
+                      <h4 className="text-base sm:text-lg font-semibold text-white mb-2 group-hover:text-cyan-400 transition-colors">
                         {hab.habilidad}
                       </h4>
-                      <p className="text-gray-400 leading-relaxed">{hab.descripcion}</p>
+                      <p className="text-gray-400 leading-relaxed text-sm sm:text-base">{hab.descripcion}</p>
                     </div>
                   ))}
                 </div>
@@ -1090,21 +1132,21 @@ Consulta el glosario para términos técnicos.`)
 
         {/* Stack Tecnológico Section */}
         {selectedSection === 'stack' && (
-          <div className="space-y-6 animate-fade-in">
-            <h2 className="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
               Stack Tecnológico
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {proyecto.stackTecnologico.map((tech, index) => (
                 <div
                   key={index}
-                  className="glass-card p-6 shine-effect group hover:scale-105 transition-all cursor-pointer"
+                  className="glass-card p-4 sm:p-6 shine-effect group hover:scale-105 transition-all cursor-pointer"
                 >
-                  <div className="flex flex-col items-center text-center space-y-3">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30 group-hover:border-cyan-400 transition-colors">
-                      <span className="text-2xl">🔧</span>
+                  <div className="flex flex-col items-center text-center space-y-2 sm:space-y-3">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30 group-hover:border-cyan-400 transition-colors">
+                      <span className="text-xl sm:text-2xl">🔧</span>
                     </div>
-                    <h3 className="text-lg font-semibold text-white group-hover:text-cyan-400 transition-colors">
+                    <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-cyan-400 transition-colors break-words">
                       {tech}
                     </h3>
                   </div>
@@ -1112,24 +1154,24 @@ Consulta el glosario para términos técnicos.`)
               ))}
             </div>
 
-            <div className="glass-card p-6 mt-8">
-              <h3 className="text-xl font-semibold text-cyan-400 mb-4">Categorías de Tecnologías</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="glass-card-dark p-4">
-                  <h4 className="text-lg font-semibold text-white mb-2">🔒 Firewalls</h4>
-                  <p className="text-gray-400">iptables, pfSense</p>
+            <div className="glass-card p-4 sm:p-6 mt-6 sm:mt-8">
+              <h3 className="text-lg sm:text-xl font-semibold text-cyan-400 mb-3 sm:mb-4">Categorías de Tecnologías</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="glass-card-dark p-3 sm:p-4">
+                  <h4 className="text-base sm:text-lg font-semibold text-white mb-2">🔒 Firewalls</h4>
+                  <p className="text-gray-400 text-sm sm:text-base">iptables, pfSense</p>
                 </div>
-                <div className="glass-card-dark p-4">
-                  <h4 className="text-lg font-semibold text-white mb-2">🌐 Networking</h4>
-                  <p className="text-gray-400">TCP/IP, VLANs, NAT, Subnetting</p>
+                <div className="glass-card-dark p-3 sm:p-4">
+                  <h4 className="text-base sm:text-lg font-semibold text-white mb-2">🌐 Networking</h4>
+                  <p className="text-gray-400 text-sm sm:text-base">TCP/IP, VLANs, NAT, Subnetting</p>
                 </div>
-                <div className="glass-card-dark p-4">
-                  <h4 className="text-lg font-semibold text-white mb-2">🔍 Análisis</h4>
-                  <p className="text-gray-400">Wireshark, tcpdump</p>
+                <div className="glass-card-dark p-3 sm:p-4">
+                  <h4 className="text-base sm:text-lg font-semibold text-white mb-2">🔍 Análisis</h4>
+                  <p className="text-gray-400 text-sm sm:text-base">Wireshark, tcpdump</p>
                 </div>
-                <div className="glass-card-dark p-4">
-                  <h4 className="text-lg font-semibold text-white mb-2">📊 Monitoreo</h4>
-                  <p className="text-gray-400">Syslog, SIEM, Bash</p>
+                <div className="glass-card-dark p-3 sm:p-4">
+                  <h4 className="text-base sm:text-lg font-semibold text-white mb-2">📊 Monitoreo</h4>
+                  <p className="text-gray-400 text-sm sm:text-base">Syslog, SIEM, Bash</p>
                 </div>
               </div>
             </div>
@@ -1138,32 +1180,32 @@ Consulta el glosario para términos técnicos.`)
 
         {/* Sección Aprende - Conceptos Básicos */}
         {selectedSection === 'aprende' && (
-          <div className="space-y-8 animate-fade-in">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+          <div className="space-y-6 sm:space-y-8 animate-fade-in">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-3 sm:mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
                 📚 Área Educativa
               </h2>
-              <p className="text-gray-300 text-lg">Aprende los conceptos fundamentales de seguridad de redes y firewalls</p>
+              <p className="text-gray-300 text-sm sm:text-lg px-4">Aprende los conceptos fundamentales de seguridad de redes y firewalls</p>
             </div>
 
             {conceptosBasicos.map((concepto, index) => (
-              <div key={index} className="glass-card p-8 shine-effect">
-                <div className="flex items-start space-x-4 mb-4">
-                  <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30">
-                    <span className="text-3xl">{concepto.icon}</span>
+              <div key={index} className="glass-card p-4 sm:p-8 shine-effect">
+                <div className="flex flex-col sm:flex-row items-start space-y-3 sm:space-y-0 sm:space-x-4 mb-4">
+                  <div className="flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-cyan-500/30">
+                    <span className="text-2xl sm:text-3xl">{concepto.icon}</span>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-cyan-400 mb-2">{concepto.titulo}</h3>
-                    <p className="text-gray-300 text-lg">{concepto.descripcion}</p>
+                    <h3 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-2">{concepto.titulo}</h3>
+                    <p className="text-gray-300 text-sm sm:text-lg leading-relaxed">{concepto.descripcion}</p>
                   </div>
                 </div>
-                <div className="glass-card-dark p-6 mt-4">
-                  <h4 className="text-lg font-semibold text-white mb-3">Puntos Clave:</h4>
+                <div className="glass-card-dark p-4 sm:p-6 mt-4">
+                  <h4 className="text-base sm:text-lg font-semibold text-white mb-3">Puntos Clave:</h4>
                   <ul className="space-y-2">
                     {concepto.detalles.map((detalle, i) => (
-                      <li key={i} className="flex items-start space-x-3">
-                        <span className="text-cyan-400 font-bold mt-1">•</span>
-                        <span className="text-gray-300">{detalle}</span>
+                      <li key={i} className="flex items-start space-x-2 sm:space-x-3">
+                        <span className="text-cyan-400 font-bold mt-1 flex-shrink-0">•</span>
+                        <span className="text-gray-300 text-sm sm:text-base">{detalle}</span>
                       </li>
                     ))}
                   </ul>
@@ -1171,24 +1213,24 @@ Consulta el glosario para términos técnicos.`)
               </div>
             ))}
 
-            <div className="glass-card p-8 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-2 border-cyan-500/30">
-              <h3 className="text-2xl font-bold text-cyan-400 mb-4">💡 Recomendaciones de Aprendizaje</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="glass-card-dark p-4">
-                  <h4 className="font-semibold text-white mb-2">1. Practica en Laboratorio</h4>
-                  <p className="text-gray-400 text-sm">Usa la sección "Laboratorio" para probar código de forma segura</p>
+            <div className="glass-card p-4 sm:p-8 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-2 border-cyan-500/30">
+              <h3 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-3 sm:mb-4">💡 Recomendaciones de Aprendizaje</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="glass-card-dark p-3 sm:p-4">
+                  <h4 className="font-semibold text-white mb-2 text-sm sm:text-base">1. Practica en Laboratorio</h4>
+                  <p className="text-gray-400 text-xs sm:text-sm">Usa la sección "Laboratorio" para probar código de forma segura</p>
                 </div>
-                <div className="glass-card-dark p-4">
-                  <h4 className="font-semibold text-white mb-2">2. Consulta el Glosario</h4>
-                  <p className="text-gray-400 text-sm">Familiarízate con los términos técnicos antes de implementar</p>
+                <div className="glass-card-dark p-3 sm:p-4">
+                  <h4 className="font-semibold text-white mb-2 text-sm sm:text-base">2. Consulta el Glosario</h4>
+                  <p className="text-gray-400 text-xs sm:text-sm">Familiarízate con los términos técnicos antes de implementar</p>
                 </div>
-                <div className="glass-card-dark p-4">
-                  <h4 className="font-semibold text-white mb-2">3. Documenta Todo</h4>
-                  <p className="text-gray-400 text-sm">Cada regla debe tener justificación y fecha de revisión</p>
+                <div className="glass-card-dark p-3 sm:p-4">
+                  <h4 className="font-semibold text-white mb-2 text-sm sm:text-base">3. Documenta Todo</h4>
+                  <p className="text-gray-400 text-xs sm:text-sm">Cada regla debe tener justificación y fecha de revisión</p>
                 </div>
-                <div className="glass-card-dark p-4">
-                  <h4 className="font-semibold text-white mb-2">4. Prueba en Entorno Aislado</h4>
-                  <p className="text-gray-400 text-sm">Nunca pruebes reglas nuevas directamente en producción</p>
+                <div className="glass-card-dark p-3 sm:p-4">
+                  <h4 className="font-semibold text-white mb-2 text-sm sm:text-base">4. Prueba en Entorno Aislado</h4>
+                  <p className="text-gray-400 text-xs sm:text-sm">Nunca pruebes reglas nuevas directamente en producción</p>
                 </div>
               </div>
             </div>
@@ -1197,22 +1239,22 @@ Consulta el glosario para términos técnicos.`)
 
         {/* Sección Glosario */}
         {selectedSection === 'glosario' && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-3 sm:mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
                 📖 Glosario Técnico
               </h2>
-              <p className="text-gray-300 text-lg">Diccionario de términos de seguridad de redes y firewalls</p>
+              <p className="text-gray-300 text-sm sm:text-lg px-4">Diccionario de términos de seguridad de redes y firewalls</p>
             </div>
 
             {/* Alfabeto de navegación */}
-            <div className="glass-card p-6">
-              <div className="flex flex-wrap justify-center gap-2">
+            <div className="glass-card p-3 sm:p-6">
+              <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
                 {Object.keys(glosario).sort().map((letra) => (
                   <button
                     key={letra}
                     onClick={() => setSelectedGlossaryLetter(letra)}
-                    className={`w-10 h-10 rounded-lg font-bold transition-all duration-300 ${
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-bold transition-all duration-300 text-sm sm:text-base ${
                       selectedGlossaryLetter === letra
                         ? 'bg-gradient-to-br from-cyan-500 to-blue-500 text-white scale-110'
                         : 'glass-card-dark text-gray-400 hover:text-white hover:scale-105'
@@ -1225,37 +1267,37 @@ Consulta el glosario para términos técnicos.`)
             </div>
 
             {/* Términos de la letra seleccionada */}
-            <div className="glass-card p-8">
-              <h3 className="text-3xl font-bold text-cyan-400 mb-6">Letra {selectedGlossaryLetter}</h3>
-              <div className="space-y-4">
+            <div className="glass-card p-4 sm:p-8">
+              <h3 className="text-2xl sm:text-3xl font-bold text-cyan-400 mb-4 sm:mb-6">Letra {selectedGlossaryLetter}</h3>
+              <div className="space-y-3 sm:space-y-4">
                 {glosario[selectedGlossaryLetter]?.map((item, index) => (
-                  <div key={index} className="glass-card-dark p-6 shine-effect hover:scale-[1.01] transition-transform">
-                    <h4 className="text-xl font-bold text-white mb-2">{item.termino}</h4>
-                    <p className="text-gray-300 leading-relaxed">{item.definicion}</p>
+                  <div key={index} className="glass-card-dark p-4 sm:p-6 shine-effect hover:scale-[1.01] transition-transform">
+                    <h4 className="text-lg sm:text-xl font-bold text-white mb-2">{item.termino}</h4>
+                    <p className="text-gray-300 leading-relaxed text-sm sm:text-base">{item.definicion}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Estadísticas del glosario */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="glass-card-dark p-6 text-center">
-                <div className="text-3xl font-bold text-cyan-400">{Object.keys(glosario).length}</div>
-                <div className="text-gray-400 text-sm mt-2">Letras</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="glass-card-dark p-4 sm:p-6 text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-cyan-400">{Object.keys(glosario).length}</div>
+                <div className="text-gray-400 text-xs sm:text-sm mt-2">Letras</div>
               </div>
-              <div className="glass-card-dark p-6 text-center">
-                <div className="text-3xl font-bold text-blue-400">
+              <div className="glass-card-dark p-4 sm:p-6 text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-blue-400">
                   {Object.values(glosario).reduce((acc, arr) => acc + arr.length, 0)}
                 </div>
-                <div className="text-gray-400 text-sm mt-2">Términos</div>
+                <div className="text-gray-400 text-xs sm:text-sm mt-2">Términos</div>
               </div>
-              <div className="glass-card-dark p-6 text-center">
-                <div className="text-3xl font-bold text-purple-400">5</div>
-                <div className="text-gray-400 text-sm mt-2">Categorías</div>
+              <div className="glass-card-dark p-4 sm:p-6 text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-purple-400">5</div>
+                <div className="text-gray-400 text-xs sm:text-sm mt-2">Categorías</div>
               </div>
-              <div className="glass-card-dark p-6 text-center">
-                <div className="text-3xl font-bold text-green-400">100%</div>
-                <div className="text-gray-400 text-sm mt-2">Actualizado</div>
+              <div className="glass-card-dark p-4 sm:p-6 text-center">
+                <div className="text-2xl sm:text-3xl font-bold text-green-400">100%</div>
+                <div className="text-gray-400 text-xs sm:text-sm mt-2">Actualizado</div>
               </div>
             </div>
           </div>
@@ -1263,18 +1305,18 @@ Consulta el glosario para términos técnicos.`)
 
         {/* Sección Laboratorio */}
         {selectedSection === 'laboratorio' && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-3 sm:mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
                 🧪 Laboratorio de Pruebas
               </h2>
-              <p className="text-gray-300 text-lg">Entorno interactivo para practicar configuraciones y código</p>
+              <p className="text-gray-300 text-sm sm:text-lg px-4">Entorno interactivo para practicar configuraciones y código</p>
             </div>
 
             {/* Selector de tecnología */}
-            <div className="glass-card p-6">
-              <h3 className="text-xl font-semibold text-cyan-400 mb-4">Selecciona una Tecnología:</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="glass-card p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-semibold text-cyan-400 mb-3 sm:mb-4">Selecciona una Tecnología:</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
                 {Object.keys(codigoEjemplos).map((tech) => (
                   <button
                     key={tech}
@@ -1283,21 +1325,21 @@ Consulta el glosario para términos técnicos.`)
                       setCodeInput('')
                       setCodeOutput('')
                     }}
-                    className={`p-4 rounded-xl transition-all duration-300 ${
+                    className={`p-3 sm:p-4 rounded-xl transition-all duration-300 ${
                       selectedTech === tech
                         ? `bg-gradient-to-br ${codigoEjemplos[tech].color} border-2 border-cyan-400 scale-105`
                         : 'glass-card-dark hover:scale-105'
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-2xl mb-2">
+                      <div className="text-xl sm:text-2xl mb-1 sm:mb-2">
                         {tech === 'iptables' && '🔴'}
                         {tech === 'pfSense' && '🔵'}
                         {tech === 'Wireshark' && '🟢'}
                         {tech === 'Bash' && '🟣'}
                         {tech === 'SIEM' && '🟡'}
                       </div>
-                      <div className="text-sm font-semibold text-white">{codigoEjemplos[tech].nombre}</div>
+                      <div className="text-xs sm:text-sm font-semibold text-white break-words">{codigoEjemplos[tech].nombre}</div>
                     </div>
                   </button>
                 ))}
@@ -1305,41 +1347,41 @@ Consulta el glosario para términos técnicos.`)
             </div>
 
             {/* Información de la tecnología seleccionada */}
-            <div className={`glass-card p-6 bg-gradient-to-br ${codigoEjemplos[selectedTech].color}`}>
-              <h3 className="text-2xl font-bold text-white mb-3">{codigoEjemplos[selectedTech].nombre}</h3>
-              <p className="text-gray-200">{codigoEjemplos[selectedTech].descripcion}</p>
+            <div className={`glass-card p-4 sm:p-6 bg-gradient-to-br ${codigoEjemplos[selectedTech].color}`}>
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">{codigoEjemplos[selectedTech].nombre}</h3>
+              <p className="text-gray-200 text-sm sm:text-base">{codigoEjemplos[selectedTech].descripcion}</p>
             </div>
 
             {/* Ejemplos de código */}
-            <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-cyan-400">📝 Ejemplos de Código y Mejores Prácticas</h3>
+            <div className="space-y-4 sm:space-y-6">
+              <h3 className="text-xl sm:text-2xl font-bold text-cyan-400">📝 Ejemplos de Código y Mejores Prácticas</h3>
               {codigoEjemplos[selectedTech].ejemplos.map((ejemplo, index) => (
-                <div key={index} className="glass-card p-6 shine-effect">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-xl font-bold text-white">{ejemplo.titulo}</h4>
+                <div key={index} className="glass-card p-4 sm:p-6 shine-effect">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-3">
+                    <h4 className="text-lg sm:text-xl font-bold text-white">{ejemplo.titulo}</h4>
                     <button
                       onClick={() => {
                         setCodeInput(ejemplo.codigo)
                         setCodeOutput('')
                       }}
-                      className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg text-white font-semibold hover:scale-105 transition-transform"
+                      className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg text-white font-semibold hover:scale-105 transition-transform text-sm sm:text-base"
                     >
                       📋 Copiar al Editor
                     </button>
                   </div>
                   
-                  <div className="glass-card-dark p-4 mb-4 rounded-lg overflow-x-auto">
-                    <pre className="text-sm text-gray-300">
+                  <div className="glass-card-dark p-3 sm:p-4 mb-3 sm:mb-4 rounded-lg overflow-x-auto">
+                    <pre className="text-xs sm:text-sm text-gray-300 whitespace-pre-wrap sm:whitespace-pre">
                       <code>{ejemplo.codigo}</code>
                     </pre>
                   </div>
                   
-                  <div className="glass-card-dark p-4 border-l-4 border-cyan-500">
-                    <div className="flex items-start space-x-3">
-                      <span className="text-2xl">💡</span>
+                  <div className="glass-card-dark p-3 sm:p-4 border-l-4 border-cyan-500">
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                      <span className="text-xl sm:text-2xl flex-shrink-0">💡</span>
                       <div>
-                        <h5 className="font-semibold text-white mb-2">Explicación:</h5>
-                        <p className="text-gray-300">{ejemplo.explicacion}</p>
+                        <h5 className="font-semibold text-white mb-2 text-sm sm:text-base">Explicación:</h5>
+                        <p className="text-gray-300 text-xs sm:text-base leading-relaxed">{ejemplo.explicacion}</p>
                       </div>
                     </div>
                   </div>
@@ -1348,26 +1390,26 @@ Consulta el glosario para términos técnicos.`)
             </div>
 
             {/* Editor interactivo */}
-            <div className="glass-card p-6">
-              <h3 className="text-2xl font-bold text-cyan-400 mb-4">🖥️ Editor de Código Interactivo</h3>
-              <div className="space-y-4">
+            <div className="glass-card p-4 sm:p-6">
+              <h3 className="text-xl sm:text-2xl font-bold text-cyan-400 mb-3 sm:mb-4">🖥️ Editor de Código Interactivo</h3>
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-white font-semibold mb-2">
+                  <label className="block text-white font-semibold mb-2 text-sm sm:text-base">
                     Escribe o pega tu código aquí:
                   </label>
                   <textarea
                     value={codeInput}
                     onChange={(e) => setCodeInput(e.target.value)}
                     placeholder={`Escribe tu código ${selectedTech} aquí...`}
-                    className="w-full h-64 bg-black/50 border border-white/10 rounded-lg p-4 text-gray-300 font-mono text-sm focus:border-cyan-500 focus:outline-none resize-none"
+                    className="w-full h-48 sm:h-64 bg-black/50 border border-white/10 rounded-lg p-3 sm:p-4 text-gray-300 font-mono text-xs sm:text-sm focus:border-cyan-500 focus:outline-none resize-none"
                   />
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <button
                     onClick={() => ejecutarCodigo(selectedTech)}
                     disabled={!codeInput.trim()}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white font-bold hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    className="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white font-bold hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm sm:text-base"
                   >
                     ▶️ Validar Código
                   </button>
@@ -1376,49 +1418,49 @@ Consulta el glosario para términos técnicos.`)
                       setCodeInput('')
                       setCodeOutput('')
                     }}
-                    className="px-6 py-3 glass-card-dark rounded-lg text-white font-semibold hover:scale-105 transition-transform"
+                    className="px-4 sm:px-6 py-2 sm:py-3 glass-card-dark rounded-lg text-white font-semibold hover:scale-105 transition-transform text-sm sm:text-base"
                   >
                     🗑️ Limpiar
                   </button>
                 </div>
 
                 {codeOutput && (
-                  <div className="glass-card-dark p-6 border-l-4 border-green-500">
-                    <h4 className="font-bold text-white mb-3 flex items-center">
-                      <span className="text-2xl mr-2">📤</span>
+                  <div className="glass-card-dark p-4 sm:p-6 border-l-4 border-green-500">
+                    <h4 className="font-bold text-white mb-3 flex items-center text-sm sm:text-base">
+                      <span className="text-xl sm:text-2xl mr-2">📤</span>
                       Resultado de la Validación:
                     </h4>
-                    <pre className="text-sm text-gray-300 whitespace-pre-wrap">{codeOutput}</pre>
+                    <pre className="text-xs sm:text-sm text-gray-300 whitespace-pre-wrap">{codeOutput}</pre>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Advertencias de seguridad */}
-            <div className="glass-card p-6 bg-gradient-to-br from-red-500/10 to-orange-500/10 border-2 border-red-500/30">
-              <div className="flex items-start space-x-4">
-                <span className="text-4xl">⚠️</span>
+            <div className="glass-card p-4 sm:p-6 bg-gradient-to-br from-red-500/10 to-orange-500/10 border-2 border-red-500/30">
+              <div className="flex items-start space-x-3 sm:space-x-4">
+                <span className="text-2xl sm:text-4xl flex-shrink-0">⚠️</span>
                 <div>
-                  <h3 className="text-xl font-bold text-red-400 mb-3">Advertencias de Seguridad</h3>
-                  <ul className="space-y-2 text-gray-300">
+                  <h3 className="text-lg sm:text-xl font-bold text-red-400 mb-2 sm:mb-3">Advertencias de Seguridad</h3>
+                  <ul className="space-y-2 text-gray-300 text-xs sm:text-base">
                     <li className="flex items-start space-x-2">
-                      <span className="text-red-400 font-bold">•</span>
+                      <span className="text-red-400 font-bold flex-shrink-0">•</span>
                       <span>Este es un entorno de validación simulado. No ejecuta código real en el sistema.</span>
                     </li>
                     <li className="flex items-start space-x-2">
-                      <span className="text-red-400 font-bold">•</span>
+                      <span className="text-red-400 font-bold flex-shrink-0">•</span>
                       <span>Siempre prueba reglas nuevas en un entorno de laboratorio aislado antes de producción.</span>
                     </li>
                     <li className="flex items-start space-x-2">
-                      <span className="text-red-400 font-bold">•</span>
+                      <span className="text-red-400 font-bold flex-shrink-0">•</span>
                       <span>Mantén acceso alternativo (consola, IPMI) antes de aplicar reglas DROP en INPUT.</span>
                     </li>
                     <li className="flex items-start space-x-2">
-                      <span className="text-red-400 font-bold">•</span>
+                      <span className="text-red-400 font-bold flex-shrink-0">•</span>
                       <span>Documenta cada cambio con fecha, autor y justificación.</span>
                     </li>
                     <li className="flex items-start space-x-2">
-                      <span className="text-red-400 font-bold">•</span>
+                      <span className="text-red-400 font-bold flex-shrink-0">•</span>
                       <span>Realiza backups de configuración antes de cambios importantes.</span>
                     </li>
                   </ul>
@@ -1430,23 +1472,23 @@ Consulta el glosario para términos técnicos.`)
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/5 backdrop-blur-xl bg-black/20 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <img
+      <footer className="relative z-10 border-t border-white/5 backdrop-blur-xl bg-black/20 mt-12 sm:mt-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <Image
                 src="https://cybervaltorix.com/wp-content/uploads/2025/09/Logo-Valtorix-1.png"
                 alt="Valtorix"
                 width={32}
                 height={32}
                 className="object-contain"
               />
-              <span className="text-gray-400">© 2025 Valtorix. Firewall Security Management.</span>
+              <span className="text-gray-400 text-xs sm:text-base text-center md:text-left">© 2025 Valtorix. Firewall Security Management.</span>
             </div>
-            <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-cyan-400 transition-colors">Documentación</a>
-              <a href="#" className="text-gray-400 hover:text-cyan-400 transition-colors">Soporte</a>
-              <a href="#" className="text-gray-400 hover:text-cyan-400 transition-colors">Contacto</a>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+              <a href="#" className="text-gray-400 hover:text-cyan-400 transition-colors text-xs sm:text-base">Documentación</a>
+              <a href="#" className="text-gray-400 hover:text-cyan-400 transition-colors text-xs sm:text-base">Soporte</a>
+              <a href="#" className="text-gray-400 hover:text-cyan-400 transition-colors text-xs sm:text-base">Contacto</a>
             </div>
           </div>
         </div>
